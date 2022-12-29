@@ -1,5 +1,7 @@
 package ir.proprog.enrollassist.domain.enrollmentList;
 
+import ir.proprog.enrollassist.domain.EnrollmentRules.EnrollmentRuleViolation;
+import ir.proprog.enrollassist.domain.EnrollmentRules.MinCreditsRequiredNotMet;
 import ir.proprog.enrollassist.domain.GraduateLevel;
 import ir.proprog.enrollassist.domain.course.Course;
 import ir.proprog.enrollassist.domain.section.ExamTime;
@@ -10,6 +12,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -56,7 +60,10 @@ public class EnrollmentListTest {
         when(student.getGraduateLevel()).thenReturn(GraduateLevel.Undergraduate);
         when(student.calculateGPA()).thenReturn(new Grade(0.0D));
 
-        assertEquals(0, enrollmentList.checkValidGPALimit().size());
+        List<EnrollmentRuleViolation> result = enrollmentList.checkValidGPALimit();
+
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
     }
 
     @Test
@@ -64,7 +71,10 @@ public class EnrollmentListTest {
         when(student.getGraduateLevel()).thenReturn(GraduateLevel.Undergraduate);
         when(student.calculateGPA()).thenReturn(new Grade(0.0D));
 
-        assertEquals(1, enrollmentList.checkValidGPALimit().size());
+        List<EnrollmentRuleViolation> result = enrollmentList.checkValidGPALimit();
+
+        assertEquals(1, result.size());
+        assertEquals(result.get(0).getClass(), MinCreditsRequiredNotMet.class);
     }
 
     @Test
@@ -200,6 +210,87 @@ public class EnrollmentListTest {
         when(student.getTotalTakenCredits()).thenReturn(10);
 
         assertEquals(2, enrollmentList.checkValidGPALimit().size());
+    }
+
+    // todo: test boundary conditions
+    @Test
+    public void checkValidGPALimit_with_credits_12_undergraduate_gpa0() throws Exception {
+        Section section1 = new Section(new Course("5234567", "CE", 4, GraduateLevel.Undergraduate.name()),
+                "4", new ExamTime("2022-12-21T16:00", "2022-12-21T19:00"), null);
+        Section section2 = new Section(new Course("6234567", "CF", 2, GraduateLevel.Undergraduate.name()),
+                "5", new ExamTime("2022-12-21T14:00", "2022-12-21T17:00"), null);
+
+        enrollmentList.addSections(section1, section2);
+
+        when(student.getGraduateLevel()).thenReturn(GraduateLevel.Undergraduate);
+        when(student.calculateGPA()).thenReturn(new Grade(0.0D));
+
+
+        List<EnrollmentRuleViolation> result = enrollmentList.checkValidGPALimit();
+
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    public void checkValidGPALimit_with_credits_24_undergraduate_gpaGreaterThan17() throws Exception {
+        Section section1 = new Section(new Course("5234567", "CE", 4, GraduateLevel.Undergraduate.name()),
+                "4", new ExamTime("2022-12-21T16:00", "2022-12-21T19:00"), null);
+        Section section2 = new Section(new Course("6234567", "CF", 4, GraduateLevel.Undergraduate.name()),
+                "5", new ExamTime("2022-12-21T14:00", "2022-12-21T17:00"), null);
+        Section section3 = new Section(new Course("6234567", "CF", 4, GraduateLevel.Undergraduate.name()),
+                "6", new ExamTime("2022-12-21T14:00", "2022-12-21T17:00"), null);
+        Section section4 = new Section(new Course("6234567", "CF", 3, GraduateLevel.Undergraduate.name()),
+                "7", new ExamTime("2022-12-21T14:00", "2022-12-21T17:00"), null);
+        Section section5 = new Section(new Course("6234567", "CF", 3, GraduateLevel.Undergraduate.name()),
+                "8", new ExamTime("2022-12-21T14:00", "2022-12-21T17:00"), null);
+        enrollmentList.addSections(section1, section2, section3, section4, section5);
+
+        when(student.getGraduateLevel()).thenReturn(GraduateLevel.Undergraduate);
+        when(student.calculateGPA()).thenReturn(new Grade(18.0D));
+
+        List<EnrollmentRuleViolation> result = enrollmentList.checkValidGPALimit();
+
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    public void checkValidGPALimit_with_credits_14_undergraduate_gpaLessThan12() throws Exception {
+        Section section1 = new Section(new Course("5234567", "CE", 4, GraduateLevel.Undergraduate.name()),
+                "4", new ExamTime("2022-12-21T16:00", "2022-12-21T19:00"), null);
+        Section section2 = new Section(new Course("6234567", "CF", 4, GraduateLevel.Undergraduate.name()),
+                "5", new ExamTime("2022-12-21T14:00", "2022-12-21T17:00"), null);
+        enrollmentList.addSections(section1, section2);
+
+        when(student.getGraduateLevel()).thenReturn(GraduateLevel.Undergraduate);
+        when(student.calculateGPA()).thenReturn(new Grade(11.0D));
+
+        List<EnrollmentRuleViolation> result = enrollmentList.checkValidGPALimit();
+
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    public void checkValidGPALimit_with_credits_20_gpaLessThan17() throws Exception {
+        Section section1 = new Section(new Course("5234567", "CE", 4, GraduateLevel.Undergraduate.name()),
+                "4", new ExamTime("2022-12-21T16:00", "2022-12-21T19:00"), null);
+        Section section2 = new Section(new Course("6234567", "CF", 4, GraduateLevel.Undergraduate.name()),
+                "5", new ExamTime("2022-12-21T14:00", "2022-12-21T17:00"), null);
+        Section section3 = new Section(new Course("6234567", "CF", 3, GraduateLevel.Undergraduate.name()),
+                "6", new ExamTime("2022-12-21T14:00", "2022-12-21T17:00"), null);
+        Section section4 = new Section(new Course("6234567", "CF", 3, GraduateLevel.Undergraduate.name()),
+                "7", new ExamTime("2022-12-21T14:00", "2022-12-21T17:00"), null);
+        enrollmentList.addSections(section1, section2, section3, section4);
+
+        when(student.getGraduateLevel()).thenReturn(GraduateLevel.Undergraduate);
+        when(student.calculateGPA()).thenReturn(new Grade(16.0D));
+
+        List<EnrollmentRuleViolation> result = enrollmentList.checkValidGPALimit();
+
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
     }
 
 }
