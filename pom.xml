@@ -91,7 +91,15 @@
             <plugin>
                 <groupId>org.pitest</groupId>
                 <artifactId>pitest-maven</artifactId>
-                <version>LATEST</version>
+                <version>1.10.3</version>
+                <configuration>
+                    <targetClasses>
+                        <param>ir.proprog.enrollassist.domain.enrollmentList.*</param>
+                    </targetClasses>
+                    <targetTests>
+                        <param>ir.proprog.enrollassist.domain.enrollmentList.*</param>
+                    </targetTests>
+                </configuration>
             </plugin>
 
         </plugins>
