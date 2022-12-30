@@ -212,7 +212,6 @@ public class EnrollmentListTest {
         assertEquals(2, enrollmentList.checkValidGPALimit().size());
     }
 
-    // todo: test boundary conditions
     @Test
     public void checkValidGPALimit_with_credits_12_undergraduate_gpa0() throws Exception {
         Section section1 = new Section(new Course("5234567", "CE", 4, GraduateLevel.Undergraduate.name()),
