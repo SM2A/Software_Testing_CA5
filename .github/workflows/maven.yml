@@ -21,3 +21,5 @@ jobs:
         run: mvn -B package --file pom.xml
       - name: Test
         run: mvn -B test --file pom.xml
+      - name: Mutation Coverage
+        run: mvn test-compile org.pitest:pitest-maven:mutationCoverage --file pom.xml
